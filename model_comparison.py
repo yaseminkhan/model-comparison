@@ -7,6 +7,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.svm import SVR
+import os
 
 models = [
     LinearRegression(),
@@ -81,9 +82,38 @@ def main():
     target_col = input("Enter the target column name: ")
     delimiter = input("Enter the delimiter for the file: ")
     
-    # load and preprocess the data
-    data = load_data(filepath, delimiter)
-    X, y = preprocess_data(data, target_col)
+    # attempt to load and preprocess the data
+    try:
+        # check if the file exists
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError("The entered file was not found.")
+        
+        # check if the file is a CSV file
+        if not filepath.endswith('.csv'):
+            raise ValueError("The file provided is not a CSV file.")
+        
+        # load data
+        data = pd.read_csv(filepath, delimiter=delimiter)
+        
+        # check if the target column is in the df
+        if target_col not in data.columns:
+            raise ValueError("The entered target column does not exist in the data.")
+        
+        # preprocess data
+        X, y = preprocess_data(data, target_col)
+    
+    except FileNotFoundError as e:
+        print(e)
+        print("Please check the file path and try again.")
+        return
+    except ValueError as e:
+        print(e)
+        print("Please check the target column name and try again.")
+        return
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        print("Please try again.")
+        return
 
     global result
     
