@@ -2,23 +2,33 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import KFold
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso 
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.svm import SVR
+
+models = [
+    LinearRegression(),
+    Ridge(alpha=1.0),
+    Lasso(alpha=0.1),
+    RandomForestRegressor(n_estimators=100, random_state=42),
+    SVR(kernel='rbf')
+]
+result = pd.DataFrame(columns=["Model", "Avg r2", "Avg mse"])
 
 def load_data(filepath, delimiter):
-    data = pd.read_csv(filepath, delimiter=delimiter)
-    # print(data.columns) # verify columns 
+    data = pd.read_csv(filepath, delimiter=delimiter) 
     return data
 
 def preprocess_data(data, target_col):
-    features = data.drop(target_col, axis=1) # everything in file other than target 
-    target = data[target_col]
+    X = data.drop(target_col, axis=1) # everything in file other than target 
+    y = data[target_col]
     
     # scale data 
     scaler = StandardScaler()
-    features_scaled = scaler.fit_transform(features)
-    return features_scaled, target
+    X_scaled = scaler.fit_transform(X)
+    return X_scaled, y
 
 def perform_cross_validation(X, y, model, n_splits=5, random_state=42):
     # K-Fold cross-validation 
@@ -39,14 +49,9 @@ def perform_cross_validation(X, y, model, n_splits=5, random_state=42):
         mse_scores.append(mse)
         r2_scores.append(r2)
         
-    return mse_scores, r2_scores
-
-def print_results(mse_scores, r2_scores):
-    print(f'Mean Squared Error for each fold: {mse_scores}')
-    print(f'Average MSE across all folds: {np.mean(mse_scores)}')
-    print(f'R-squared for each fold: {r2_scores}')
-    print(f'Average R-squared across all folds: {np.mean(r2_scores)}')
-
+    avg_mse = np.mean(mse_scores)
+    avg_r2 = np.mean(r2_scores)
+    return avg_r2, avg_mse
 
 def main():
     # get user inputs for file path and target column
@@ -57,13 +62,21 @@ def main():
     # load and preprocess the data
     data = load_data(filepath, delimiter)
     X, y = preprocess_data(data, target_col)
+
+    global result
     
-    # specify the model to use
-    model = LinearRegression()
-    
-    # perform cross-validation and print results
-    mse_scores, r2_scores = perform_cross_validation(X, y, model)
-    print_results(mse_scores, r2_scores)
+    # cycle through models to run
+    for model in models:
+        avg_r2, avg_mse = perform_cross_validation(X, y, model)
+        # append the results to the df
+        result = result.append({
+            "Model": model.__class__.__name__,
+            "Avg r2": avg_r2,
+            "Avg mse": avg_mse
+        }, ignore_index=True)
+
+    print (result)
+
 
 if __name__ == '__main__':
     main()
