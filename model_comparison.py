@@ -53,6 +53,28 @@ def perform_cross_validation(X, y, model, n_splits=5, random_state=42):
     avg_r2 = np.mean(r2_scores)
     return avg_r2, avg_mse
 
+def print_plot(result):
+    # Create a figure and a set of subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))  # 1 row, 2 columns
+
+    # Plotting Average R² values
+    result.plot(kind='bar', x='Model', y='Avg r2', ax=ax1, color='green', legend=False)
+    ax1.set_title('Average R² Values')
+    ax1.set_ylabel('Avg R²')
+    ax1.set_xticklabels(result['Model'], rotation=45)
+
+    # Plotting Average MSE values
+    result.plot(kind='bar', x='Model', y='Avg mse', ax=ax2, color='orange', legend=False)
+    ax2.set_title('Average MSE Values')
+    ax2.set_ylabel('Avg MSE')
+    ax2.set_xticklabels(result['Model'], rotation=45)
+
+    # Adjust layout
+    plt.tight_layout()
+
+    # Show plot
+    plt.show()
+
 def main():
     # get user inputs for file path and target column
     filepath = input("Enter the .csv file path: ")
@@ -76,6 +98,8 @@ def main():
         }, ignore_index=True)
 
     print (result)
+
+    print_plot(result)
 
 
 if __name__ == '__main__':
