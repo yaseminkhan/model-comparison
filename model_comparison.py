@@ -23,7 +23,18 @@ def load_data(filepath, delimiter):
     return data
 
 def preprocess_data(data, target_col):
-    X = data.drop(target_col, axis=1) # everything in file other than target 
+    # remove rows with any null values
+    initial_row_count = data.shape[0]
+    data = data.dropna()
+    final_row_count = data.shape[0]
+    rows_removed = initial_row_count - final_row_count
+    if rows_removed > 0:
+        print(f"Removed {rows_removed} rows with null values.")
+    
+    # reset index after dropping null values
+    data = data.reset_index(drop=True)
+
+    X = data.drop(target_col, axis=1)  # everything in file other than target 
     y = data[target_col]
     
     # scale data 
@@ -55,25 +66,22 @@ def perform_cross_validation(X, y, model, n_splits=5, random_state=42):
     return avg_r2, avg_mse
 
 def print_plot(result):
-    # Create a figure and a set of subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))  # 1 row, 2 columns
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
 
-    # Plotting Average R² values
-    result.plot(kind='bar', x='Model', y='Avg r2', ax=ax1, color='green', legend=False)
+    # plotting average R² values
+    result.plot(kind='bar', x='Model', y='Avg r2', ax=ax1, color='blue', legend=False)
+    ax1.axhline(y=1, color='red', linestyle='--') # demonstrate ideal R2 value 
     ax1.set_title('Average R² Values')
     ax1.set_ylabel('Avg R²')
     ax1.set_xticklabels(result['Model'], rotation=45)
 
-    # Plotting Average MSE values
+    # plotting average MSE values
     result.plot(kind='bar', x='Model', y='Avg mse', ax=ax2, color='orange', legend=False)
     ax2.set_title('Average MSE Values')
     ax2.set_ylabel('Avg MSE')
     ax2.set_xticklabels(result['Model'], rotation=45)
 
-    # Adjust layout
     plt.tight_layout()
-
-    # Show plot
     plt.show()
 
 def main():
@@ -127,8 +135,7 @@ def main():
             "Avg mse": avg_mse
         }, ignore_index=True)
 
-    print (result)
-
+    print(result)
     print_plot(result)
 
 
